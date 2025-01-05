@@ -6,12 +6,12 @@ import plotly.express as px
 # Set page layout
 st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
 
-# Add custom CSS for dashboard-like grouping
+# Add custom CSS for encapsulating charts
 st.markdown("""
     <style>
-    .dashboard-wrapper {
+    .dashboard-container {
         background-color: #262730;
-        border: 2px solid #4CAF50; /* Green border for dashboard */
+        border: 2px solid #4CAF50;
         border-radius: 10px;
         padding: 20px;
         margin-top: 20px;
@@ -104,7 +104,7 @@ if uploaded_file:
                 risk_counts.columns = ['Risk Category', 'Count']
 
                 # Dashboard container
-                st.markdown('<div class="dashboard-wrapper">', unsafe_allow_html=True)
+                st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
 
                 # Row for Risk Summary and Trust Score Distribution
                 col1, col2 = st.columns([1, 3])
