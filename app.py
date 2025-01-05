@@ -35,9 +35,9 @@ uploaded_file = st.sidebar.file_uploader("Upload your CSV file here", type="csv"
 # Categorize risk levels (adjusted thresholds)
 def categorize_risk(score):
     """Categorize wallets into High, Medium, and Low Risk based on trust score."""
-    if score < -0.4:  # Lower threshold for High Risk
+    if score < -0.2:  # Less strict threshold for High Risk
         return 'High Risk'
-    elif -0.4 <= score <= 0.3:  # Adjusted range for Medium Risk
+    elif -0.2 <= score <= 0.2:  # Narrower range for Medium Risk
         return 'Medium Risk'
     else:
         return 'Low Risk'
@@ -56,7 +56,7 @@ def create_features(df):
 # Train the model
 def train_model(features):
     """Train Isolation Forest and calculate trust scores."""
-    model = IsolationForest(contamination=0.2, random_state=42)  # Increased contamination for higher variability
+    model = IsolationForest(contamination=0.1, random_state=42)  # Adjusted contamination
     model.fit(features.drop('wallet_id', axis=1))
     features['trust_score'] = model.decision_function(features.drop('wallet_id', axis=1))
     return features, model
@@ -74,7 +74,18 @@ if uploaded_file:
             
             # Generate features and calculate trust scores
             features = create_features(data)
+            
+            # Display feature summary for debugging
+            st.write("📋 **Feature Summary:**")
+            st.dataframe(features.describe())
+            
+            # Train the model and get trust scores
             features, model = train_model(features)
+            
+            # Display trust score distribution for debugging
+            st.write("📊 **Trust Score Distribution:**")
+            fig_hist = px.histogram(features, x='trust_score', nbins=20, title="Trust Score Distribution")
+            st.plotly_chart(fig_hist)
             
             # Categorize wallets by risk
             features['risk_category'] = features['trust_score'].apply(categorize_risk)
@@ -123,7 +134,6 @@ if uploaded_file:
         st.error(f"An error occurred: {str(e)}")
 else:
     st.info("👈 Upload a CSV file to get started!")
-
 
 # Footer
 st.markdown("""
