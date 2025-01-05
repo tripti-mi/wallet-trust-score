@@ -1,0 +1,4 @@
+wallet_id,timestamp,transaction_amount,counterparty_wallet,flagged
+abc123,2025-01-01T12:00:00,500,xyz456,0
+def789,2025-01-02T14:30:00,1000,ghi101,1
+ghi456,2025-01-03T15:00:00,250,abc123,0
