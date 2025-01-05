@@ -3,56 +3,24 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 import plotly.express as px
 
-# App title and description
+# Set page layout
 st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
 
-# Apply enhanced CSS styling
+# Add custom CSS for a bordered container
 st.markdown("""
-<style>
-/* Reset padding/margin for body */
-body, .block-container {
-    margin: 0 auto;
-    padding: 20px;
-}
+    <style>
+    .dashboard-container {
+        border: 2px solid #4CAF50; /* Green border */
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #1e1e1e; /* Dark background to match theme */
+        margin-top: 20px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-/* Enhanced card-like container for charts */
-.card-container {
-    background-color: #2b2b2b; /* Slightly lighter for dark mode */
-    padding: 20px;
-    border-radius: 15px;
-    border: 3px solid #444444; /* Darker border */
-    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.4); /* Stronger shadow */
-    margin-top: 20px; /* Space from top elements */
-}
-
-/* Chart title styling */
-.chart-header {
-    text-align: left;
-    font-weight: bold;
-    font-size: 1.3rem;
-    color: #ffffff;
-    margin-bottom: 15px;
-}
-
-/* Adjust chart margins to fit neatly inside the container */
-.plotly-graph {
-    margin: 10px 0;
-}
-
-/* Adjust background for light mode (optional) */
-[data-theme="light"] .card-container {
-    background-color: #f9f9f9; /* Light gray for light mode */
-    border-color: #cccccc; /* Light border */
-    color: #000000; /* Adjust text color for visibility */
-}
-
-/* Adjust headings for light mode */
-[data-theme="light"] .chart-header {
-    color: #000000;
-}
-</style>
-""", unsafe_allow_html=True)
-
+# App title and description
 st.title("🌟 AI-Powered Wallet Trust Score System")
 st.markdown("""
 Welcome to the Wallet Trust Score System!  
@@ -131,12 +99,12 @@ if uploaded_file:
 
                 # Encapsulate all charts in a card container
                 with st.container():
-                    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+                    st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
 
                     # Risk Summary and Trust Score Distribution
                     col1, col2 = st.columns([1, 3])
                     with col1:
-                        st.markdown('<div class="chart-header">Risk Level Summary</div>', unsafe_allow_html=True)
+                        st.subheader("📊 Risk Level Summary")
                         fig_pie = px.pie(
                             risk_counts, values='Count', names='Risk Category',
                             color='Risk Category',
@@ -147,12 +115,12 @@ if uploaded_file:
                         st.plotly_chart(fig_pie, use_container_width=True)
 
                     with col2:
-                        st.markdown('<div class="chart-header">Trust Score Distribution</div>', unsafe_allow_html=True)
+                        st.subheader("📈 Trust Score Distribution")
                         fig_hist = px.histogram(features, x='trust_score', nbins=20, color_discrete_sequence=["#636EFA"])
                         st.plotly_chart(fig_hist, use_container_width=True)
 
                     # Wallet Trust Scores
-                    st.markdown('<div class="chart-header">Wallet Trust Scores by Category</div>', unsafe_allow_html=True)
+                    st.subheader("📊 Wallet Trust Scores by Category")
                     fig_bar = px.bar(
                         features, x='wallet_id', y='trust_score',
                         color='risk_category',
