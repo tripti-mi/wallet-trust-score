@@ -11,7 +11,7 @@ st.markdown("""
 .dashboard-container {
     background-color: #f5f5f5; /* Subtle gray */
     padding: 20px;
-    margin-top: 0px; /* Remove the white line issue by removing extra spacing */
+    margin: 0; /* Remove extra spacing */
     border-radius: 10px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -23,12 +23,6 @@ st.markdown("""
     font-size: 1.2rem;
     margin-bottom: 10px;
     color: var(--text-color); /* Dynamically adapts to light and dark modes */
-}
-
-/* Remove padding/margin causing gaps */
-body {
-    margin: 0;
-    padding: 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -121,7 +115,7 @@ if uploaded_file:
                 risk_counts = features['risk_category'].value_counts().reset_index()
                 risk_counts.columns = ['Risk Category', 'Count']
 
-                # Start the styled dashboard container
+                # Encapsulate all charts in a single container
                 st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
 
                 # Risk Level Summary and Trust Score Distribution in one row (1:3)
@@ -173,7 +167,7 @@ if uploaded_file:
                 )
                 st.plotly_chart(fig_bar, use_container_width=True)
 
-                # End the styled dashboard container
+                # End the encapsulating container
                 st.markdown('</div>', unsafe_allow_html=True)
 
                 # Download Results
