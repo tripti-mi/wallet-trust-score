@@ -95,6 +95,10 @@ if uploaded_file:
                     lambda score: categorize_risk_dynamic(score, lower_threshold, upper_threshold)
                 )
 
+                # Calculate the risk category summary
+                risk_counts = features['risk_category'].value_counts().reset_index()
+                risk_counts.columns = ['Risk Category', 'Count']
+
                 # Risk Level Summary and Trust Score Distribution in one row (1:3)
                 st.header("📊 Risk Analysis")
                 col1, col2 = st.columns([1, 3])  # Create two columns with a 1:3 ratio
