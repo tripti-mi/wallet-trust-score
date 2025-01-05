@@ -97,25 +97,21 @@ if uploaded_file:
                     st.plotly_chart(fig_pie, use_container_width=True)
 
                 with col2:
-                    st.subheader("📈 Trust Score Distribution")
-                    fig_hist = px.histogram(features, x='trust_score', nbins=20, color_discrete_sequence=["#636EFA"])
-                    st.plotly_chart(fig_hist, use_container_width=True)
-
-                # Wallet Trust Scores Chart
-                st.subheader("📊 Wallet Trust Scores by Category")
-                fig_bar = px.bar(
-                    features, x='wallet_id', y='trust_score',
-                    color='risk_category',
-                    color_discrete_map={
-                        'High Risk': 'red', 'Medium Risk': 'orange', 'Low Risk': 'green'
-                    }
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
-
-                # Download Results
-                csv = features.to_csv(index=False)
-                st.download_button("Download Results as CSV", csv, "wallet_trust_scores.csv", "text/csv")
-
+                    # Wallet Trust Scores Chart
+                    st.subheader("📊 Wallet Trust Scores by Category")
+                    fig_bar = px.bar(
+                        features, x='wallet_id', y='trust_score',
+                        color='risk_category',
+                        color_discrete_map={
+                            'High Risk': 'red', 'Medium Risk': 'orange', 'Low Risk': 'green'
+                        }
+                    )
+                    st.plotly_chart(fig_bar, use_container_width=True)
+                    
+                    # Download Results
+                    csv = features.to_csv(index=False)
+                    st.download_button("Download Results as CSV", csv, "wallet_trust_scores.csv", "text/csv")
+        
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 else:
