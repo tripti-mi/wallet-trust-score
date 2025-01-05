@@ -32,69 +32,73 @@ st.sidebar.info("""
 """)
 uploaded_file = st.sidebar.file_uploader("Upload your CSV file here", type="csv")
 
-# Process uploaded file
+# Categorize risk levels (adjusted thresholds)
+def categorize_risk(score):
+    """Categorize wallets into High, Medium, and Low Risk based on trust score."""
+    if score < -0.4:  # Lower threshold for High Risk
+        return 'High Risk'
+    elif -0.4 <= score <= 0.3:  # Adjusted range for Medium Risk
+        return 'Medium Risk'
+    else:
+        return 'Low Risk'
+
+# Feature engineering
+def create_features(df):
+    """Generate wallet-level features from transaction data."""
+    features = df.groupby('wallet_id').agg({
+        'transaction_amount': ['mean', 'count'],
+        'counterparty_wallet': pd.Series.nunique,
+        'flagged': 'sum'
+    })
+    features.columns = ['avg_tx_amount', 'tx_count', 'unique_peers', 'flagged_connections']
+    return features.reset_index()
+
+# Train the model
+def train_model(features):
+    """Train Isolation Forest and calculate trust scores."""
+    model = IsolationForest(contamination=0.2, random_state=42)  # Increased contamination for higher variability
+    model.fit(features.drop('wallet_id', axis=1))
+    features['trust_score'] = model.decision_function(features.drop('wallet_id', axis=1))
+    return features, model
+
+# Updated pipeline
 if uploaded_file:
     try:
-        # Load the data
+        # Load and validate data
         data = pd.read_csv(uploaded_file)
-
-        # Validate required columns
         required_columns = ['wallet_id', 'timestamp', 'transaction_amount', 'counterparty_wallet', 'flagged']
         if not all(col in data.columns for col in required_columns):
             st.error(f"Your CSV must contain the following columns: {', '.join(required_columns)}")
         else:
             st.success("File uploaded successfully!")
             
-            # Feature engineering
-            def create_features(df):
-                features = df.groupby('wallet_id').agg({
-                    'transaction_amount': ['mean', 'count'],
-                    'counterparty_wallet': pd.Series.nunique,
-                    'flagged': 'sum'
-                })
-                features.columns = ['avg_tx_amount', 'tx_count', 'unique_peers', 'flagged_connections']
-                return features.reset_index()
-
+            # Generate features and calculate trust scores
             features = create_features(data)
-
-            # Train the model
-            model = IsolationForest(contamination=0.1, random_state=42)
-            model.fit(features.drop('wallet_id', axis=1))
-
-            # Calculate trust scores
-            features['trust_score'] = model.decision_function(features.drop('wallet_id', axis=1))
-
-            # Categorize risk levels
-            def categorize_risk(score):
-                if score < -0.2:
-                    return 'High Risk'
-                elif -0.2 <= score <= 0.2:
-                    return 'Medium Risk'
-                else:
-                    return 'Low Risk'
-
+            features, model = train_model(features)
+            
+            # Categorize wallets by risk
             features['risk_category'] = features['trust_score'].apply(categorize_risk)
 
-            # Display summary
+            # Display Risk Summary
             st.header("📊 Risk Level Summary")
             risk_counts = features['risk_category'].value_counts().reset_index()
             risk_counts.columns = ['Risk Category', 'Count']
             fig_pie = px.pie(risk_counts, values='Count', names='Risk Category', title='Risk Level Distribution')
             st.plotly_chart(fig_pie)
 
-            # Interactive filtering
+            # Interactive Filtering
             st.subheader("🔍 Filter by Risk Category")
             selected_risk = st.selectbox("Select a Risk Category", options=risk_counts['Risk Category'])
             filtered_data = features[features['risk_category'] == selected_risk]
             st.write(f"Displaying wallets in the **{selected_risk}** category:")
             st.dataframe(filtered_data)
 
-            # Visualization
+            # Visualization of Trust Scores
             st.subheader("📈 Wallet Trust Scores")
             fig_bar = px.bar(
-                features, 
-                x='wallet_id', 
-                y='trust_score', 
+                features,
+                x='wallet_id',
+                y='trust_score',
                 color='risk_category',
                 color_discrete_map={
                     'High Risk': 'red',
@@ -106,7 +110,7 @@ if uploaded_file:
             )
             st.plotly_chart(fig_bar)
 
-            # Download results
+            # Download Results
             csv = features.to_csv(index=False)
             st.download_button(
                 label="Download Results as CSV",
@@ -119,6 +123,7 @@ if uploaded_file:
         st.error(f"An error occurred: {str(e)}")
 else:
     st.info("👈 Upload a CSV file to get started!")
+
 
 # Footer
 st.markdown("""
