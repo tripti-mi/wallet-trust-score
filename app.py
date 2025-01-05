@@ -32,16 +32,6 @@ st.sidebar.info("""
 """)
 uploaded_file = st.sidebar.file_uploader("Upload your CSV file here", type="csv")
 
-# Categorize risk levels (adjusted thresholds)
-def categorize_risk(score):
-    """Categorize wallets into High, Medium, and Low Risk based on trust score."""
-    if score < -0.2:  # Less strict threshold for High Risk
-        return 'High Risk'
-    elif -0.2 <= score <= 0.2:  # Narrower range for Medium Risk
-        return 'Medium Risk'
-    else:
-        return 'Low Risk'
-
 # Feature engineering
 def create_features(df):
     """Generate wallet-level features from transaction data."""
@@ -61,6 +51,16 @@ def train_model(features):
     features['trust_score'] = model.decision_function(features.drop('wallet_id', axis=1))
     return features, model
 
+# Categorize risk levels dynamically based on percentiles
+def categorize_risk_dynamic(score, lower_threshold, upper_threshold):
+    """Categorize wallets into High, Medium, and Low Risk based on dynamic thresholds."""
+    if score < lower_threshold:
+        return 'High Risk'
+    elif lower_threshold <= score <= upper_threshold:
+        return 'Medium Risk'
+    else:
+        return 'Low Risk'
+
 # Updated pipeline
 if uploaded_file:
     try:
@@ -74,61 +74,71 @@ if uploaded_file:
             
             # Generate features and calculate trust scores
             features = create_features(data)
-            
-            # Display feature summary for debugging
-            st.write("📋 **Feature Summary:**")
-            st.dataframe(features.describe())
-            
-            # Train the model and get trust scores
             features, model = train_model(features)
-            
-            # Display trust score distribution for debugging
-            st.write("📊 **Trust Score Distribution:**")
-            fig_hist = px.histogram(features, x='trust_score', nbins=20, title="Trust Score Distribution")
-            st.plotly_chart(fig_hist)
-            
-            # Categorize wallets by risk
-            features['risk_category'] = features['trust_score'].apply(categorize_risk)
 
-            # Display Risk Summary
-            st.header("📊 Risk Level Summary")
-            risk_counts = features['risk_category'].value_counts().reset_index()
-            risk_counts.columns = ['Risk Category', 'Count']
-            fig_pie = px.pie(risk_counts, values='Count', names='Risk Category', title='Risk Level Distribution')
-            st.plotly_chart(fig_pie)
+            # Check dataset size
+            if len(features) < 10:
+                st.warning("Dataset is too small for reliable percentile-based categorization. Please upload more data.")
+            else:
+                # Calculate percentiles for dynamic thresholds
+                lower_threshold = features['trust_score'].quantile(0.25)  # 25th percentile
+                upper_threshold = features['trust_score'].quantile(0.75)  # 75th percentile
+                
+                # Display dynamic thresholds for debugging
+                st.write(f"Dynamic Thresholds:")
+                st.write(f"High Risk (below): {lower_threshold:.2f}")
+                st.write(f"Medium Risk (between): {lower_threshold:.2f} and {upper_threshold:.2f}")
+                st.write(f"Low Risk (above): {upper_threshold:.2f}")
+                
+                # Categorize wallets by dynamic risk levels
+                features['risk_category'] = features['trust_score'].apply(
+                    lambda score: categorize_risk_dynamic(score, lower_threshold, upper_threshold)
+                )
 
-            # Interactive Filtering
-            st.subheader("🔍 Filter by Risk Category")
-            selected_risk = st.selectbox("Select a Risk Category", options=risk_counts['Risk Category'])
-            filtered_data = features[features['risk_category'] == selected_risk]
-            st.write(f"Displaying wallets in the **{selected_risk}** category:")
-            st.dataframe(filtered_data)
+                # Display Risk Summary
+                st.header("📊 Risk Level Summary")
+                risk_counts = features['risk_category'].value_counts().reset_index()
+                risk_counts.columns = ['Risk Category', 'Count']
+                fig_pie = px.pie(risk_counts, values='Count', names='Risk Category', title='Risk Level Distribution')
+                st.plotly_chart(fig_pie)
 
-            # Visualization of Trust Scores
-            st.subheader("📈 Wallet Trust Scores")
-            fig_bar = px.bar(
-                features,
-                x='wallet_id',
-                y='trust_score',
-                color='risk_category',
-                color_discrete_map={
-                    'High Risk': 'red',
-                    'Medium Risk': 'orange',
-                    'Low Risk': 'green'
-                },
-                title="Wallet Trust Scores by Risk Category",
-                labels={'wallet_id': "Wallet ID", 'trust_score': "Trust Score"}
-            )
-            st.plotly_chart(fig_bar)
+                # Visualization of Trust Scores
+                st.subheader("📈 Trust Score Distribution")
+                fig_hist = px.histogram(features, x='trust_score', nbins=20, title="Trust Score Distribution")
+                st.plotly_chart(fig_hist)
 
-            # Download Results
-            csv = features.to_csv(index=False)
-            st.download_button(
-                label="Download Results as CSV",
-                data=csv,
-                file_name='wallet_trust_scores.csv',
-                mime='text/csv',
-            )
+                # Interactive Filtering
+                st.subheader("🔍 Filter by Risk Category")
+                selected_risk = st.selectbox("Select a Risk Category", options=risk_counts['Risk Category'])
+                filtered_data = features[features['risk_category'] == selected_risk]
+                st.write(f"Displaying wallets in the **{selected_risk}** category:")
+                st.dataframe(filtered_data)
+
+                # Bar Chart of Trust Scores
+                st.subheader("📊 Wallet Trust Scores by Category")
+                fig_bar = px.bar(
+                    features,
+                    x='wallet_id',
+                    y='trust_score',
+                    color='risk_category',
+                    color_discrete_map={
+                        'High Risk': 'red',
+                        'Medium Risk': 'orange',
+                        'Low Risk': 'green'
+                    },
+                    title="Wallet Trust Scores by Risk Category",
+                    labels={'wallet_id': "Wallet ID", 'trust_score': "Trust Score"}
+                )
+                st.plotly_chart(fig_bar)
+
+                # Download Results
+                csv = features.to_csv(index=False)
+                st.download_button(
+                    label="Download Results as CSV",
+                    data=csv,
+                    file_name='wallet_trust_scores.csv',
+                    mime='text/csv',
+                )
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
