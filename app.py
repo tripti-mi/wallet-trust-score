@@ -5,10 +5,29 @@ import plotly.express as px
 
 # App title and description
 st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
+st.markdown("""
+<style>
+/* Add background and border for the dashboard section */
+.dashboard-container {
+    background-color: #f5f5f5; /* Subtle gray */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Align all chart headers centrally */
+.chart-header {
+    text-align: center;
+    font-weight: bold;
+    color: #333333;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("🌟 AI-Powered Wallet Trust Score System")
 st.markdown("""
 Welcome to the Wallet Trust Score System!  
-This tool helps you identify potential risks in blockchain transactions by categorizing wallets into **High Risk**, **Medium Risk**, and **Low Risk**.  
+This tool helps you identify potential risks in blockchain transactions by categorizing wallets into **High Risk**, **Medium Risk**, and **Low Risk**.
 
 ### How it works:
 - **Trust Score**: Measures the likelihood of suspicious activity for each wallet.  
@@ -84,12 +103,6 @@ if uploaded_file:
                 lower_threshold = features['trust_score'].quantile(0.25)  # 25th percentile
                 upper_threshold = features['trust_score'].quantile(0.75)  # 75th percentile
                 
-                # Display dynamic thresholds for debugging
-                st.write(f"Dynamic Thresholds:")
-                st.write(f"High Risk (below): {lower_threshold:.2f}")
-                st.write(f"Medium Risk (between): {lower_threshold:.2f} and {upper_threshold:.2f}")
-                st.write(f"Low Risk (above): {upper_threshold:.2f}")
-                
                 # Categorize wallets by dynamic risk levels
                 features['risk_category'] = features['trust_score'].apply(
                     lambda score: categorize_risk_dynamic(score, lower_threshold, upper_threshold)
@@ -99,24 +112,43 @@ if uploaded_file:
                 risk_counts = features['risk_category'].value_counts().reset_index()
                 risk_counts.columns = ['Risk Category', 'Count']
 
+                # Start the styled dashboard container
+                st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
+
                 # Risk Level Summary and Trust Score Distribution in one row (1:3)
                 col1, col2 = st.columns([1, 3])  # Create two columns with a 1:3 ratio
 
                 # Risk Level Summary
                 with col1:
-                    st.subheader("📊 Risk Level Summary")
-                    fig_pie = px.pie(risk_counts, values='Count', names='Risk Category', title="Risk Level Distribution")
+                    st.markdown('<h4 class="chart-header">Risk Level Summary</h4>', unsafe_allow_html=True)
+                    fig_pie = px.pie(
+                        risk_counts,
+                        values='Count',
+                        names='Risk Category',
+                        title="",
+                        color='Risk Category',
+                        color_discrete_map={
+                            'High Risk': 'red',
+                            'Medium Risk': 'orange',
+                            'Low Risk': 'green'
+                        }
+                    )
                     st.plotly_chart(fig_pie, use_container_width=True)
 
                 # Trust Score Distribution
                 with col2:
-                    st.subheader("📈 Trust Score Distribution")
-                    fig_hist = px.histogram(features, x='trust_score', nbins=20, title="Trust Score Distribution")
+                    st.markdown('<h4 class="chart-header">Trust Score Distribution</h4>', unsafe_allow_html=True)
+                    fig_hist = px.histogram(
+                        features,
+                        x='trust_score',
+                        nbins=20,
+                        title="",
+                        color_discrete_sequence=["#636EFA"]  # A default color
+                    )
                     st.plotly_chart(fig_hist, use_container_width=True)
 
-
                 # Bar Chart of Trust Scores
-                st.subheader("📊 Wallet Trust Scores by Category")
+                st.markdown('<h4 class="chart-header">Wallet Trust Scores by Category</h4>', unsafe_allow_html=True)
                 fig_bar = px.bar(
                     features,
                     x='wallet_id',
@@ -127,10 +159,13 @@ if uploaded_file:
                         'Medium Risk': 'orange',
                         'Low Risk': 'green'
                     },
-                    title="Wallet Trust Scores by Risk Category",
+                    title="",
                     labels={'wallet_id': "Wallet ID", 'trust_score': "Trust Score"}
                 )
-                st.plotly_chart(fig_bar)
+                st.plotly_chart(fig_bar, use_container_width=True)
+
+                # End the styled dashboard container
+                st.markdown('</div>', unsafe_allow_html=True)
 
                 # Download Results
                 csv = features.to_csv(index=False)
