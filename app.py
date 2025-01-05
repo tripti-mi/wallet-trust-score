@@ -7,8 +7,17 @@ import plotly.express as px
 st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
 st.title("🌟 AI-Powered Wallet Trust Score System")
 st.markdown("""
-This tool calculates **Trust Scores** for blockchain wallets to help you identify potential risks.  
-Simply upload your transaction data, and we'll handle the rest!  
+Welcome to the Wallet Trust Score System!  
+This tool helps you identify potential risks in blockchain transactions by categorizing wallets into **High Risk**, **Medium Risk**, and **Low Risk**.  
+
+### How it works:
+- **Trust Score**: Measures the likelihood of suspicious activity for each wallet.  
+- **Risk Levels**:  
+  - **High Risk**: Wallets with low trust scores that may require immediate investigation.  
+  - **Medium Risk**: Wallets with moderate scores that should be monitored.  
+  - **Low Risk**: Wallets with high trust scores that appear safe.  
+
+Upload your transaction data, and we’ll handle the rest!
 """)
 
 # Sidebar for upload and instructions
@@ -28,7 +37,7 @@ if uploaded_file:
     try:
         # Load the data
         data = pd.read_csv(uploaded_file)
-        
+
         # Validate required columns
         required_columns = ['wallet_id', 'timestamp', 'transaction_amount', 'counterparty_wallet', 'flagged']
         if not all(col in data.columns for col in required_columns):
@@ -55,11 +64,49 @@ if uploaded_file:
             # Calculate trust scores
             features['trust_score'] = model.decision_function(features.drop('wallet_id', axis=1))
 
-            # Display results
-            st.header("📊 Trust Score Results")
-            st.dataframe(features[['wallet_id', 'trust_score']])
+            # Categorize risk levels
+            def categorize_risk(score):
+                if score < -0.2:
+                    return 'High Risk'
+                elif -0.2 <= score <= 0.2:
+                    return 'Medium Risk'
+                else:
+                    return 'Low Risk'
 
-            # Allow download of results
+            features['risk_category'] = features['trust_score'].apply(categorize_risk)
+
+            # Display summary
+            st.header("📊 Risk Level Summary")
+            risk_counts = features['risk_category'].value_counts().reset_index()
+            risk_counts.columns = ['Risk Category', 'Count']
+            fig_pie = px.pie(risk_counts, values='Count', names='Risk Category', title='Risk Level Distribution')
+            st.plotly_chart(fig_pie)
+
+            # Interactive filtering
+            st.subheader("🔍 Filter by Risk Category")
+            selected_risk = st.selectbox("Select a Risk Category", options=risk_counts['Risk Category'])
+            filtered_data = features[features['risk_category'] == selected_risk]
+            st.write(f"Displaying wallets in the **{selected_risk}** category:")
+            st.dataframe(filtered_data)
+
+            # Visualization
+            st.subheader("📈 Wallet Trust Scores")
+            fig_bar = px.bar(
+                features, 
+                x='wallet_id', 
+                y='trust_score', 
+                color='risk_category',
+                color_discrete_map={
+                    'High Risk': 'red',
+                    'Medium Risk': 'orange',
+                    'Low Risk': 'green'
+                },
+                title="Wallet Trust Scores by Risk Category",
+                labels={'wallet_id': "Wallet ID", 'trust_score': "Trust Score"}
+            )
+            st.plotly_chart(fig_bar)
+
+            # Download results
             csv = features.to_csv(index=False)
             st.download_button(
                 label="Download Results as CSV",
@@ -67,19 +114,6 @@ if uploaded_file:
                 file_name='wallet_trust_scores.csv',
                 mime='text/csv',
             )
-
-            # Visualization
-            st.header("📈 Trust Score Visualization")
-            fig = px.bar(
-                features, 
-                x='wallet_id', 
-                y='trust_score', 
-                color='trust_score',
-                color_continuous_scale='RdYlGn',
-                title="Wallet Trust Scores",
-                labels={'wallet_id': "Wallet ID", 'trust_score': "Trust Score"}
-            )
-            st.plotly_chart(fig)
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
@@ -89,5 +123,5 @@ else:
 # Footer
 st.markdown("""
 ---
-Developed with ❤️ using **Streamlit**.  
+Developed with ❤️ using **Streamlit**.
 """)
