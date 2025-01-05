@@ -6,32 +6,49 @@ import plotly.express as px
 # App title and description
 st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
 
-# Apply proper CSS styling
+# Apply enhanced CSS styling
 st.markdown("""
 <style>
-/* Reset all default padding/margin */
+/* Reset padding/margin for body */
 body, .block-container {
     margin: 0 auto;
     padding: 20px;
 }
 
-/* Add a card-like container for charts */
+/* Enhanced card-like container for charts */
 .card-container {
-    background-color: #1e1e1e; /* Match dark mode */
+    background-color: #2b2b2b; /* Slightly lighter for dark mode */
     padding: 20px;
-    border-radius: 10px;
-    border: 2px solid #444444; /* Add border */
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow */
-    margin-bottom: 20px;
+    border-radius: 15px;
+    border: 3px solid #444444; /* Darker border */
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.4); /* Stronger shadow */
+    margin-top: 20px; /* Space from top elements */
 }
 
-/* Chart headers */
+/* Chart title styling */
 .chart-header {
     text-align: left;
     font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
+    font-size: 1.3rem;
     color: #ffffff;
+    margin-bottom: 15px;
+}
+
+/* Adjust chart margins to fit neatly inside the container */
+.plotly-graph {
+    margin: 10px 0;
+}
+
+/* Adjust background for light mode (optional) */
+[data-theme="light"] .card-container {
+    background-color: #f9f9f9; /* Light gray for light mode */
+    border-color: #cccccc; /* Light border */
+    color: #000000; /* Adjust text color for visibility */
+}
+
+/* Adjust headings for light mode */
+[data-theme="light"] .chart-header {
+    color: #000000;
 }
 </style>
 """, unsafe_allow_html=True)
