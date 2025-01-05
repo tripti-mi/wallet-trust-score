@@ -7,11 +7,16 @@ import plotly.express as px
 st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
 st.markdown("""
 <style>
+/* Reset all default padding and margin globally */
+body, .block-container {
+    margin: 0;
+    padding: 0;
+}
+
 /* Add border and background for the entire chart container */
 .dashboard-container {
     background-color: #f5f5f5; /* Subtle gray */
     padding: 20px;
-    margin: 0 auto; /* Center align the container */
     border-radius: 10px;
     border: 2px solid #dddddd; /* Add a border */
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
@@ -26,8 +31,8 @@ st.markdown("""
     color: var(--text-color); /* Dynamically adapts to light and dark modes */
 }
 
-/* Remove unnecessary white lines or padding */
-body {
+/* Remove margin/padding for enclosing container */
+html, body, [data-testid="stAppViewContainer"] {
     margin: 0;
     padding: 0;
 }
@@ -190,3 +195,4 @@ if uploaded_file:
         st.error(f"An error occurred: {str(e)}")
 else:
     st.info("👈 Upload a CSV file to get started!")
+
