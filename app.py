@@ -95,24 +95,22 @@ if uploaded_file:
                     lambda score: categorize_risk_dynamic(score, lower_threshold, upper_threshold)
                 )
 
-                # Display Risk Summary
-                st.header("📊 Risk Level Summary")
-                risk_counts = features['risk_category'].value_counts().reset_index()
-                risk_counts.columns = ['Risk Category', 'Count']
-                fig_pie = px.pie(risk_counts, values='Count', names='Risk Category', title='Risk Level Distribution')
-                st.plotly_chart(fig_pie)
+                # Risk Level Summary and Trust Score Distribution in one row (1:3)
+                st.header("📊 Risk Analysis")
+                col1, col2 = st.columns([1, 3])  # Create two columns with a 1:3 ratio
 
-                # Visualization of Trust Scores
-                st.subheader("📈 Trust Score Distribution")
-                fig_hist = px.histogram(features, x='trust_score', nbins=20, title="Trust Score Distribution")
-                st.plotly_chart(fig_hist)
+                # Risk Level Summary
+                with col1:
+                    st.subheader("📊 Risk Level Summary")
+                    fig_pie = px.pie(risk_counts, values='Count', names='Risk Category', title="Risk Level Distribution")
+                    st.plotly_chart(fig_pie, use_container_width=True)
 
-                # Interactive Filtering
-                st.subheader("🔍 Filter by Risk Category")
-                selected_risk = st.selectbox("Select a Risk Category", options=risk_counts['Risk Category'])
-                filtered_data = features[features['risk_category'] == selected_risk]
-                st.write(f"Displaying wallets in the **{selected_risk}** category:")
-                st.dataframe(filtered_data)
+                # Trust Score Distribution
+                with col2:
+                    st.subheader("📈 Trust Score Distribution")
+                    fig_hist = px.histogram(features, x='trust_score', nbins=20, title="Trust Score Distribution")
+                    st.plotly_chart(fig_hist, use_container_width=True)
+
 
                 # Bar Chart of Trust Scores
                 st.subheader("📊 Wallet Trust Scores by Category")
