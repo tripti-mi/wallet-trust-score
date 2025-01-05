@@ -11,14 +11,17 @@ st.markdown("""
 .dashboard-container {
     background-color: #f5f5f5; /* Subtle gray */
     padding: 20px;
+    margin-top: -20px; /* Tighten the container to avoid gaps */
     border-radius: 10px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Align all chart headers centrally */
+/* Align chart headers to the left */
 .chart-header {
-    text-align: center;
+    text-align: left;
     font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
     color: #333333;
 }
 </style>
@@ -120,7 +123,7 @@ if uploaded_file:
 
                 # Risk Level Summary
                 with col1:
-                    st.markdown('<h4 class="chart-header">Risk Level Summary</h4>', unsafe_allow_html=True)
+                    st.markdown('<div class="chart-header">Risk Level Summary</div>', unsafe_allow_html=True)
                     fig_pie = px.pie(
                         risk_counts,
                         values='Count',
@@ -137,18 +140,18 @@ if uploaded_file:
 
                 # Trust Score Distribution
                 with col2:
-                    st.markdown('<h4 class="chart-header">Trust Score Distribution</h4>', unsafe_allow_html=True)
+                    st.markdown('<div class="chart-header">Trust Score Distribution</div>', unsafe_allow_html=True)
                     fig_hist = px.histogram(
                         features,
                         x='trust_score',
                         nbins=20,
                         title="",
-                        color_discrete_sequence=["#636EFA"]  # A default color
+                        color_discrete_sequence=["#636EFA"]  # Default color
                     )
                     st.plotly_chart(fig_hist, use_container_width=True)
 
                 # Bar Chart of Trust Scores
-                st.markdown('<h4 class="chart-header">Wallet Trust Scores by Category</h4>', unsafe_allow_html=True)
+                st.markdown('<div class="chart-header">Wallet Trust Scores by Category</div>', unsafe_allow_html=True)
                 fig_bar = px.bar(
                     features,
                     x='wallet_id',
@@ -180,9 +183,3 @@ if uploaded_file:
         st.error(f"An error occurred: {str(e)}")
 else:
     st.info("👈 Upload a CSV file to get started!")
-
-# Footer
-st.markdown("""
----
-Developed with ❤️ using **Streamlit**.
-""")
