@@ -9,35 +9,29 @@ st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
 # Apply proper CSS styling
 st.markdown("""
 <style>
-/* Proper padding and margin reset */
+/* Reset all default padding/margin */
 body, .block-container {
     margin: 0 auto;
-    padding: 20px; /* Add padding to prevent elements from sticking to the edge */
-}
-
-/* Add border and background for the dashboard section */
-.dashboard-container {
-    background-color: #1e1e1e; /* Match dark mode theme */
     padding: 20px;
-    margin: 0 auto;
-    border-radius: 10px;
-    border: 2px solid #444444; /* Subtle dark border */
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Subtle shadow */
 }
 
-/* Chart title styling */
+/* Add a card-like container for charts */
+.card-container {
+    background-color: #1e1e1e; /* Match dark mode */
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #444444; /* Add border */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+    margin-bottom: 20px;
+}
+
+/* Chart headers */
 .chart-header {
     text-align: left;
     font-weight: bold;
     font-size: 1.2rem;
     margin-bottom: 10px;
     color: #ffffff;
-}
-
-/* General fixes for all gaps */
-html, body, [data-testid="stAppViewContainer"] {
-    margin: 0;
-    padding: 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -118,40 +112,42 @@ if uploaded_file:
                 risk_counts = features['risk_category'].value_counts().reset_index()
                 risk_counts.columns = ['Risk Category', 'Count']
 
-                # Encapsulate charts inside a styled container
-                st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
+                # Encapsulate all charts in a card container
+                with st.container():
+                    st.markdown('<div class="card-container">', unsafe_allow_html=True)
 
-                # Risk Summary and Trust Score Distribution
-                col1, col2 = st.columns([1, 3])
-                with col1:
-                    st.markdown('<div class="chart-header">Risk Level Summary</div>', unsafe_allow_html=True)
-                    fig_pie = px.pie(
-                        risk_counts, values='Count', names='Risk Category',
-                        color='Risk Category',
+                    # Risk Summary and Trust Score Distribution
+                    col1, col2 = st.columns([1, 3])
+                    with col1:
+                        st.markdown('<div class="chart-header">Risk Level Summary</div>', unsafe_allow_html=True)
+                        fig_pie = px.pie(
+                            risk_counts, values='Count', names='Risk Category',
+                            color='Risk Category',
+                            color_discrete_map={
+                                'High Risk': 'red', 'Medium Risk': 'orange', 'Low Risk': 'green'
+                            }
+                        )
+                        st.plotly_chart(fig_pie, use_container_width=True)
+
+                    with col2:
+                        st.markdown('<div class="chart-header">Trust Score Distribution</div>', unsafe_allow_html=True)
+                        fig_hist = px.histogram(features, x='trust_score', nbins=20, color_discrete_sequence=["#636EFA"])
+                        st.plotly_chart(fig_hist, use_container_width=True)
+
+                    # Wallet Trust Scores
+                    st.markdown('<div class="chart-header">Wallet Trust Scores by Category</div>', unsafe_allow_html=True)
+                    fig_bar = px.bar(
+                        features, x='wallet_id', y='trust_score',
+                        color='risk_category',
                         color_discrete_map={
                             'High Risk': 'red', 'Medium Risk': 'orange', 'Low Risk': 'green'
                         }
                     )
-                    st.plotly_chart(fig_pie, use_container_width=True)
+                    st.plotly_chart(fig_bar, use_container_width=True)
 
-                with col2:
-                    st.markdown('<div class="chart-header">Trust Score Distribution</div>', unsafe_allow_html=True)
-                    fig_hist = px.histogram(features, x='trust_score', nbins=20, color_discrete_sequence=["#636EFA"])
-                    st.plotly_chart(fig_hist, use_container_width=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
-                # Wallet Trust Scores
-                st.markdown('<div class="chart-header">Wallet Trust Scores by Category</div>', unsafe_allow_html=True)
-                fig_bar = px.bar(
-                    features, x='wallet_id', y='trust_score',
-                    color='risk_category',
-                    color_discrete_map={
-                        'High Risk': 'red', 'Medium Risk': 'orange', 'Low Risk': 'green'
-                    }
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
-
-                st.markdown('</div>', unsafe_allow_html=True)
-
+                # Download Results
                 csv = features.to_csv(index=False)
                 st.download_button("Download Results as CSV", csv, "wallet_trust_scores.csv", "text/csv")
 
