@@ -6,17 +6,22 @@ import plotly.express as px
 # Set page layout
 st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
 
-# Add custom CSS for a bordered container
+# Add custom CSS for dashboard-like grouping
 st.markdown("""
     <style>
-    .dashboard-container {
-        border: 2px solid #4CAF50; /* Green border */
-        padding: 20px;
+    .dashboard-wrapper {
+        background-color: #262730;
+        border: 2px solid #4CAF50; /* Green border for dashboard */
         border-radius: 10px;
-        background-color: #1e1e1e; /* Dark background to match theme */
+        padding: 20px;
         margin-top: 20px;
-        margin-bottom: 20px;
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .chart-title {
+        text-align: left;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -98,13 +103,13 @@ if uploaded_file:
                 risk_counts = features['risk_category'].value_counts().reset_index()
                 risk_counts.columns = ['Risk Category', 'Count']
 
-                # Encapsulate all charts in a card container
-                st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
+                # Dashboard container
+                st.markdown('<div class="dashboard-wrapper">', unsafe_allow_html=True)
 
-                # Risk Summary and Trust Score Distribution
+                # Row for Risk Summary and Trust Score Distribution
                 col1, col2 = st.columns([1, 3])
                 with col1:
-                    st.subheader("📊 Risk Level Summary")
+                    st.markdown('<p class="chart-title">📊 Risk Level Summary</p>', unsafe_allow_html=True)
                     fig_pie = px.pie(
                         risk_counts, values='Count', names='Risk Category',
                         color='Risk Category',
@@ -115,12 +120,12 @@ if uploaded_file:
                     st.plotly_chart(fig_pie, use_container_width=True)
 
                 with col2:
-                    st.subheader("📈 Trust Score Distribution")
+                    st.markdown('<p class="chart-title">📈 Trust Score Distribution</p>', unsafe_allow_html=True)
                     fig_hist = px.histogram(features, x='trust_score', nbins=20, color_discrete_sequence=["#636EFA"])
                     st.plotly_chart(fig_hist, use_container_width=True)
 
-                # Wallet Trust Scores
-                st.subheader("📊 Wallet Trust Scores by Category")
+                # Wallet Trust Scores Chart
+                st.markdown('<p class="chart-title">📊 Wallet Trust Scores by Category</p>', unsafe_allow_html=True)
                 fig_bar = px.bar(
                     features, x='wallet_id', y='trust_score',
                     color='risk_category',
@@ -130,8 +135,7 @@ if uploaded_file:
                 )
                 st.plotly_chart(fig_bar, use_container_width=True)
 
-                # Close container
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)  # Close dashboard container
 
                 # Download Results
                 csv = features.to_csv(index=False)
