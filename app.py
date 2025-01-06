@@ -85,7 +85,7 @@ if uploaded_file:
 
                 # Container for charts
                 with st.container(border=True):
-                    st.markdown("### 📊 Risk Analysis Dashboard")  # Header for the dashboard
+                    st.markdown("### 📊 Risk Analysis")  # Header for the dashboard
 
                     # Row for Risk Summary and Trust Score Distribution
                     col1, col2 = st.columns([1, 3])
