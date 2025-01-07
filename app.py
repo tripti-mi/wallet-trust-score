@@ -119,7 +119,7 @@ if uploaded_file:
     st.success("File uploaded successfully!")
 else:
     data = load_sample_data()
-    st.info("Using the sample dataset. Upload your file to replace the sample data.")
+    st.info("Using the sample dataset. Upload your file to replace the sample data.", icon="ℹ️")
 
 # Verify columns in dataset
 required_columns = ['wallet_id', 'timestamp', 'transaction_amount', 'counterparty_wallet']
