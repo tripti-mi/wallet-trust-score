@@ -22,7 +22,7 @@ This tool analyzes blockchain wallet data by calculating a **Risk Profile Score*
 
 **Formula for Risk Profile Score**:  
 \[
-\text{Risk Profile Score} = \text{(Weight 1 * Avg Transaction Amount)} + \text{(Weight 2 * Transaction Count)} + \text{(Weight 3 * Unique Counterparties)} + \text{(Weight 4 * Flagged Connections)}
+\text{Risk Profile Score} = (w_1 \cdot \text{Avg Transaction Amount}) + (w_2 \cdot \text{Transaction Count}) + (w_3 \cdot \text{Unique Counterparties})
 \]  
 
 **Thresholds** (Default):  
@@ -39,17 +39,23 @@ st.sidebar.info("""
 - `timestamp`: Date and time of the transaction.  
 - `transaction_amount`: Value of the transaction.  
 - `counterparty_wallet`: Wallet involved in the transaction.  
-- `flagged`: (Optional) 1 for flagged (fraudulent), 0 for not flagged.  
+
+---
+
+**Note:** The app will automatically calculate these metrics from your dataset:  
+- **Average Transaction Amount**: Average of `transaction_amount` for each wallet.  
+- **Transaction Count**: Count of transactions for each wallet.  
+- **Unique Counterparties**: Count of unique `counterparty_wallet` values for each wallet.  
 """)
+
 uploaded_file = st.sidebar.file_uploader("Upload your CSV file here", type="csv")
 
 # Sidebar for metric customization
 st.sidebar.title("⚙️ Customize Metrics")
 metrics = {
-    "avg_tx_amount": st.sidebar.slider("Average Transaction Amount", 0.0, 1.0, 0.25),
-    "tx_count": st.sidebar.slider("Transaction Count", 0.0, 1.0, 0.25),
-    "unique_peers": st.sidebar.slider("Unique Counterparties", 0.0, 1.0, 0.25),
-    "flagged_connections": st.sidebar.slider("Flagged Connections", 0.0, 1.0, 0.25)
+    "avg_tx_amount": st.sidebar.slider("Average Transaction Amount", 0.0, 1.0, 0.33),
+    "tx_count": st.sidebar.slider("Transaction Count", 0.0, 1.0, 0.33),
+    "unique_peers": st.sidebar.slider("Unique Counterparties", 0.0, 1.0, 0.34),
 }
 
 # Sidebar for thresholds
@@ -59,12 +65,12 @@ monitor_threshold = st.sidebar.slider("Monitor Threshold", safe_threshold, 1.0, 
 
 # Feature engineering
 def create_features(df):
+    """Derive the metrics from raw transaction data."""
     features = df.groupby('wallet_id').agg({
         'transaction_amount': ['mean', 'count'],
         'counterparty_wallet': pd.Series.nunique,
-        'flagged': 'sum'
     })
-    features.columns = ['avg_tx_amount', 'tx_count', 'unique_peers', 'flagged_connections']
+    features.columns = ['avg_tx_amount', 'tx_count', 'unique_peers']
     return features.reset_index()
 
 # Normalize scores
@@ -73,8 +79,7 @@ def normalize_scores(features, weights):
     features['raw_score'] = (
         weights["avg_tx_amount"] * features["avg_tx_amount"] +
         weights["tx_count"] * features["tx_count"] +
-        weights["unique_peers"] * features["unique_peers"] +
-        weights["flagged_connections"] * features["flagged_connections"]
+        weights["unique_peers"] * features["unique_peers"]
     )
     features['normalized_score'] = scaler.fit_transform(features[['raw_score']])
     return features
@@ -91,27 +96,32 @@ def categorize_risk(score):
 if uploaded_file:
     try:
         data = pd.read_csv(uploaded_file)
-        required_columns = ['wallet_id', 'timestamp', 'transaction_amount', 'counterparty_wallet', 'flagged']
+        required_columns = ['wallet_id', 'timestamp', 'transaction_amount', 'counterparty_wallet']
         if not all(col in data.columns for col in required_columns):
             st.error(f"Your CSV must contain the following columns: {', '.join(required_columns)}")
         else:
             st.success("File uploaded successfully!")
+            
+            # Derive features
             features = create_features(data)
+            
+            # Normalize and calculate scores
             features = normalize_scores(features, metrics)
             features['risk_category'] = features['normalized_score'].apply(categorize_risk)
 
+            # Risk Summary
             risk_counts = features['risk_category'].value_counts().reset_index()
             risk_counts.columns = ['Risk Category', 'Count']
 
             # Container for charts
             with st.container():
-                st.markdown("#### 📊 Risk Analysis")  # Smaller header for the dashboard
+                st.markdown("#### 📊 Risk Analysis")  # Header for the dashboard
 
                 # Row for Risk Summary and Wallet Risk Profiles
                 col1, col2 = st.columns([1, 3])
 
                 with col1:
-                    st.markdown("#### Risk Level Summary")  # Smaller subheader
+                    st.markdown("#### Risk Level Summary")
                     fig_pie = px.pie(
                         risk_counts, values='Count', names='Risk Category',
                         color='Risk Category',
@@ -122,7 +132,7 @@ if uploaded_file:
                     st.plotly_chart(fig_pie, use_container_width=True)
 
                 with col2:
-                    st.markdown("#### Wallet Risk Profiles")  # Smaller subheader
+                    st.markdown("#### Wallet Risk Profiles")
                     fig_bar = px.bar(
                         features, x='wallet_id', y='normalized_score',
                         color='risk_category',
