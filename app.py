@@ -12,35 +12,40 @@ st.markdown("""
 Welcome to **RiskProfiler AI**!  
 This tool analyzes blockchain wallet data by calculating a **Risk Profile Score** based on customizable metrics.
 
----
-
-**How it Works**:  
+### How it works:
 1. **Upload Data**: Upload your wallet transaction data for analysis.  
 2. **Customize Metrics**: Adjust the weights of metrics or toggle them on/off.  
 3. **Set Thresholds**: Define thresholds for `Safe`, `Monitor`, and `Investigate`.  
 4. **Get Results**: View risk categorizations and download the results.
-
----
-
-**Formula for Risk Profile Score**:  
-\[
-\text{Risk Profile Score} = (w_1 \cdot \text{Avg Transaction Amount}) + (w_2 \cdot \text{Transaction Count}) + (w_3 \cdot \text{Unique Counterparties})
-\]
-
----
-
-### Behind the Scenes:
-- **Average Transaction Amount**: Measures the typical transaction size of a wallet.  
-- **Transaction Count**: Reflects the activity level of a wallet.  
-- **Unique Counterparties**: Indicates the number of unique wallets interacting with this wallet.  
-Each metric is weighted based on your preference, and the total score is normalized to fall between 0 and 1.  
-This score determines whether a wallet is categorized as Safe, Monitor, or Investigate.
-
-**Thresholds** (Default):  
-- `Safe`: Normalized score below **0.3**.  
-- `Monitor`: Normalized score between **0.3** and **0.7**.  
-- `Investigate`: Normalized score above **0.7**.  
 """)
+
+# Expandable section for formula and behind-the-scenes explanation
+with st.expander("📖 Behind the Scenes: Explanation and Formula"):
+    st.markdown("""
+    ### Formula for Risk Profile Score
+    The Risk Profile Score is calculated as:  
+
+    ```
+    Risk Profile Score = 
+      (Weight 1 × Avg Transaction Amount) +
+      (Weight 2 × Transaction Count) +
+      (Weight 3 × Unique Counterparties)
+    ```
+
+    ### Explanation of Metrics:
+    - **Average Transaction Amount**: Measures the typical transaction size of a wallet.  
+    - **Transaction Count**: Reflects the activity level of a wallet.  
+    - **Unique Counterparties**: Indicates the number of unique wallets interacting with this wallet.  
+
+    ### How It Works:
+    1. The metrics are derived from the uploaded dataset.  
+    2. The score is calculated by multiplying each metric by its respective weight (set by the user).  
+    3. The total score is normalized to a range of 0–1 using MinMaxScaler.  
+    4. Based on the thresholds, wallets are categorized into:
+       - `Safe` (below the Safe threshold),
+       - `Monitor` (between Safe and Monitor thresholds),
+       - `Investigate` (above the Monitor threshold).
+    """)
 
 # Sidebar for file upload
 st.sidebar.title("📄 Upload Your File")
