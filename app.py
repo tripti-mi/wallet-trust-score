@@ -159,7 +159,23 @@ if uploaded_file:
             st.markdown("""
             Clustering is a machine learning technique that groups data points based on similarity.  
             Here, we use **KMeans clustering** to group wallets into behavioral patterns.
+
+            ### How to Interpret the Graph:
+            - **Axes**:
+            - `Avg Transaction Amount` (X-axis): Represents the average size of transactions per wallet.
+            - `Transaction Count` (Y-axis): Represents how many transactions each wallet has conducted.
+            - `Unique Counterparties` (Z-axis): Represents the number of unique wallets interacting with a specific wallet.
+
+            - **Clusters**:
+            - Each cluster (denoted by a different color) represents a group of wallets with similar behavioral patterns.
+            - Wallets in the same cluster exhibit similar transaction volumes, activity levels, or diversity of counterparties.
+
+            ### Business Insights:
+            - Use this graph to identify unusual clusters that may represent suspicious activity.
+            - Clusters with low transaction amounts but high unique counterparties could indicate micro-transactions for fraud.
+            - Clusters with high transaction amounts and low counterparties could indicate high-value wallets or corporate accounts.
             """)
+
             # Apply KMeans
             kmeans = KMeans(n_clusters=3, random_state=42)
             features['cluster'] = kmeans.fit_predict(features[['avg_tx_amount', 'tx_count', 'unique_peers']])
@@ -167,9 +183,16 @@ if uploaded_file:
             # Visualization
             fig_cluster = px.scatter_3d(
                 features, x='avg_tx_amount', y='tx_count', z='unique_peers', color='cluster',
-                title="Wallet Clusters (Unsupervised Learning)"
+                title="Wallet Clusters (Unsupervised Learning)",
+                labels={
+                    'avg_tx_amount': 'Avg Transaction Amount',
+                    'tx_count': 'Transaction Count',
+                    'unique_peers': 'Unique Counterparties',
+                    'cluster': 'Cluster'
+                }
             )
             st.plotly_chart(fig_cluster, use_container_width=True)
+
 
             # Download Results
             csv = features.to_csv(index=False)
