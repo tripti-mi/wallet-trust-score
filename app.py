@@ -7,12 +7,14 @@ import plotly.express as px
 st.set_page_config(page_title="RiskProfiler AI", layout="wide")
 
 # App title and description
-st.title("🌟 RiskProfiler AI: Wallet Risk Analysis System")
+st.title("🛡️ RiskProfiler AI: Wallet Risk Analysis System")
 st.markdown("""
 Welcome to **RiskProfiler AI**!  
 This tool analyzes blockchain wallet data by calculating a **Risk Profile Score** based on customizable metrics.
 
-### How it works:
+---
+
+**How it Works**:  
 1. **Upload Data**: Upload your wallet transaction data for analysis.  
 2. **Customize Metrics**: Adjust the weights of metrics or toggle them on/off.  
 3. **Set Thresholds**: Define thresholds for `Safe`, `Monitor`, and `Investigate`.  
@@ -23,7 +25,16 @@ This tool analyzes blockchain wallet data by calculating a **Risk Profile Score*
 **Formula for Risk Profile Score**:  
 \[
 \text{Risk Profile Score} = (w_1 \cdot \text{Avg Transaction Amount}) + (w_2 \cdot \text{Transaction Count}) + (w_3 \cdot \text{Unique Counterparties})
-\]  
+\]
+
+---
+
+### Behind the Scenes:
+- **Average Transaction Amount**: Measures the typical transaction size of a wallet.  
+- **Transaction Count**: Reflects the activity level of a wallet.  
+- **Unique Counterparties**: Indicates the number of unique wallets interacting with this wallet.  
+Each metric is weighted based on your preference, and the total score is normalized to fall between 0 and 1.  
+This score determines whether a wallet is categorized as Safe, Monitor, or Investigate.
 
 **Thresholds** (Default):  
 - `Safe`: Normalized score below **0.3**.  
@@ -42,7 +53,7 @@ st.sidebar.info("""
 
 ---
 
-**Note:** The app will automatically calculate these metrics from your dataset:  
+**Note**: The app will automatically calculate these metrics from your dataset:  
 - **Average Transaction Amount**: Average of `transaction_amount` for each wallet.  
 - **Transaction Count**: Count of transactions for each wallet.  
 - **Unique Counterparties**: Count of unique `counterparty_wallet` values for each wallet.  
