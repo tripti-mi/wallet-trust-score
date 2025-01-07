@@ -105,13 +105,13 @@ if uploaded_file:
 
             # Container for charts
             with st.container():
-                st.markdown("### 📊 Risk Analysis")  # Header for the dashboard
+                st.markdown("#### 📊 Risk Analysis")  # Smaller header for the dashboard
 
                 # Row for Risk Summary and Wallet Risk Profiles
                 col1, col2 = st.columns([1, 3])
 
                 with col1:
-                    st.subheader("Risk Level Summary")
+                    st.markdown("#### Risk Level Summary")  # Smaller subheader
                     fig_pie = px.pie(
                         risk_counts, values='Count', names='Risk Category',
                         color='Risk Category',
@@ -122,7 +122,7 @@ if uploaded_file:
                     st.plotly_chart(fig_pie, use_container_width=True)
 
                 with col2:
-                    st.subheader("Wallet Risk Profiles")
+                    st.markdown("#### Wallet Risk Profiles")  # Smaller subheader
                     fig_bar = px.bar(
                         features, x='wallet_id', y='normalized_score',
                         color='risk_category',
