@@ -4,22 +4,21 @@ from sklearn.ensemble import IsolationForest
 import plotly.express as px
 
 # Set page layout
-st.set_page_config(page_title="Wallet Trust Score System", layout="wide")
+st.set_page_config(page_title="Wallet Risk Profile System", layout="wide")
 
 # App title and description
-st.title("🌟 AI-Powered Wallet Trust Score System")
+st.title("🌟 AI-Powered Wallet Risk Profile System")
 st.markdown("""
-Welcome to the Wallet Trust Score System!  
-This tool helps you identify potential risks in blockchain transactions by categorizing wallets into **High Risk**, **Medium Risk**, and **Low Risk**.
+Welcome to the Wallet Risk Profile System!  
+This tool helps you identify potential risks in blockchain wallets by calculating a **Risk Profile Score** based on customizable metrics.
 
 ### How it works:
-- **Trust Score**: Measures the likelihood of suspicious activity for each wallet.  
-- **Risk Levels**:  
-  - **High Risk**: Wallets with low trust scores that may require immediate investigation.  
-  - **Medium Risk**: Wallets with moderate scores that should be monitored.  
-  - **Low Risk**: Wallets with high trust scores that appear safe.  
+1. **Upload Data**: Provide transaction data for analysis.  
+2. **Customize Metrics**: Adjust the weights of selected metrics or turn them on/off.  
+3. **Thresholds**: Define thresholds for "Safe," "Monitor," and "Investigate."  
+4. **Get Results**: View risk categorizations and download the results.
 
-Upload your transaction data, and we’ll handle the rest!
+Upload your transaction data to get started!
 """)
 
 # Sidebar for file upload
@@ -44,21 +43,23 @@ def create_features(df):
     features.columns = ['avg_tx_amount', 'tx_count', 'unique_peers', 'flagged_connections']
     return features.reset_index()
 
-# Train model
-def train_model(features):
-    model = IsolationForest(contamination=0.1, random_state=42)
-    model.fit(features.drop('wallet_id', axis=1))
-    features['trust_score'] = model.decision_function(features.drop('wallet_id', axis=1))
-    return features, model
+# Calculate Risk Profile Score
+def calculate_risk_score(features, weights, variables):
+    score = 0
+    for var in variables:
+        if variables[var]:  # Only include variables turned ON
+            score += features[var] * weights[var]
+    features['risk_profile_score'] = score
+    return features
 
-# Categorize risk levels dynamically
-def categorize_risk_dynamic(score, lower_threshold, upper_threshold):
-    if score < lower_threshold:
-        return 'High Risk'
-    elif lower_threshold <= score <= upper_threshold:
-        return 'Medium Risk'
+# Categorize wallets based on thresholds
+def categorize_wallets(score, safe_threshold, monitor_threshold):
+    if score <= safe_threshold:
+        return 'Safe'
+    elif safe_threshold < score <= monitor_threshold:
+        return 'Monitor'
     else:
-        return 'Low Risk'
+        return 'Investigate'
 
 if uploaded_file:
     try:
@@ -69,15 +70,39 @@ if uploaded_file:
         else:
             st.success("File uploaded successfully!")
             features = create_features(data)
-            features, model = train_model(features)
 
             if len(features) < 10:
-                st.warning("Dataset is too small for reliable categorization. Please upload more data.")
+                st.warning("Dataset is too small for reliable categorization. Please upload more data (>= 10 rows).")
             else:
-                lower_threshold = features['trust_score'].quantile(0.25)
-                upper_threshold = features['trust_score'].quantile(0.75)
-                features['risk_category'] = features['trust_score'].apply(
-                    lambda score: categorize_risk_dynamic(score, lower_threshold, upper_threshold)
+                # Sidebar for customization
+                st.sidebar.title("⚙️ Customize Metrics")
+                st.sidebar.markdown("Adjust weights or toggle variables on/off.")
+
+                # Variables and default weights
+                variables = {
+                    'avg_tx_amount': st.sidebar.checkbox("Average Transaction Amount", value=True),
+                    'tx_count': st.sidebar.checkbox("Transaction Count", value=True),
+                    'unique_peers': st.sidebar.checkbox("Unique Counterparties", value=True),
+                    'flagged_connections': st.sidebar.checkbox("Flagged Connections", value=True),
+                }
+                weights = {
+                    'avg_tx_amount': st.sidebar.slider("Weight: Average Transaction Amount", 0.0, 1.0, 0.25),
+                    'tx_count': st.sidebar.slider("Weight: Transaction Count", 0.0, 1.0, 0.25),
+                    'unique_peers': st.sidebar.slider("Weight: Unique Counterparties", 0.0, 1.0, 0.25),
+                    'flagged_connections': st.sidebar.slider("Weight: Flagged Connections", 0.0, 1.0, 0.25),
+                }
+
+                # Sidebar for thresholds
+                st.sidebar.title("⚙️ Set Thresholds")
+                safe_threshold = st.sidebar.slider("Safe Threshold", 0.0, 1.0, 0.3)
+                monitor_threshold = st.sidebar.slider("Monitor Threshold", 0.0, 1.0, 0.7)
+
+                # Calculate Risk Profile Score
+                features = calculate_risk_score(features, weights, variables)
+
+                # Categorize wallets
+                features['risk_category'] = features['risk_profile_score'].apply(
+                    lambda score: categorize_wallets(score, safe_threshold, monitor_threshold)
                 )
 
                 risk_counts = features['risk_category'].value_counts().reset_index()
@@ -85,9 +110,9 @@ if uploaded_file:
 
                 # Container for charts
                 with st.container(border=True):
-                    st.markdown("### 📊 Risk Analysis")  # Header for the dashboard
+                    st.markdown("### 📊 Risk Analysis")
 
-                    # Row for Risk Summary and Trust Score Distribution
+                    # Row for Risk Summary and Wallet Risk Profile
                     col1, col2 = st.columns([1, 3])
 
                     with col1:
@@ -96,26 +121,26 @@ if uploaded_file:
                             risk_counts, values='Count', names='Risk Category',
                             color='Risk Category',
                             color_discrete_map={
-                                'High Risk': 'red', 'Medium Risk': 'orange', 'Low Risk': 'green'
+                                'Safe': 'green', 'Monitor': 'orange', 'Investigate': 'red'
                             }
                         )
                         st.plotly_chart(fig_pie, use_container_width=True)
 
                     with col2:
-                        # Wallet Trust Scores Chart
-                        st.subheader("Wallet Trust Scores by Category")
+                        st.subheader("Wallet Risk Profiles")
                         fig_bar = px.bar(
-                            features, x='wallet_id', y='trust_score',
+                            features, x='wallet_id', y='risk_profile_score',
                             color='risk_category',
                             color_discrete_map={
-                                'High Risk': 'red', 'Medium Risk': 'orange', 'Low Risk': 'green'
-                            }
+                                'Safe': 'green', 'Monitor': 'orange', 'Investigate': 'red'
+                            },
+                            title="Wallet Risk Profile Scores"
                         )
                         st.plotly_chart(fig_bar, use_container_width=True)
 
-                        # Download Results
-                        csv = features.to_csv(index=False)
-                        st.download_button("Download Results as CSV", csv, "wallet_trust_scores.csv", "text/csv")
+                # Download Results
+                csv = features.to_csv(index=False)
+                st.download_button("Download Results as CSV", csv, "wallet_risk_profiles.csv", "text/csv")
 
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
