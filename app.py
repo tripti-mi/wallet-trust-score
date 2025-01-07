@@ -126,7 +126,7 @@ if uploaded_file:
             risk_counts.columns = ['Risk Category', 'Count']
 
             # Container for charts
-            with st.container():
+            with st.container(border=True):
                 st.markdown("#### 📊 Risk Analysis")  # Header for the dashboard
 
                 # Row for Risk Summary and Wallet Risk Profiles
@@ -156,29 +156,40 @@ if uploaded_file:
 
             # Unsupervised Learning Section
             st.markdown("### 🔍 Unsupervised Learning: Wallet Clustering")
-            st.markdown("""
-            Clustering is a machine learning technique that groups data points based on similarity.  
-            Here, we use **KMeans clustering** to group wallets into behavioral patterns.
 
-            ### How to Interpret the Graph:
-            - **Axes**:
-            - `Avg Transaction Amount` (X-axis): Represents the average size of transactions per wallet.
-            - `Transaction Count` (Y-axis): Represents how many transactions each wallet has conducted.
-            - `Unique Counterparties` (Z-axis): Represents the number of unique wallets interacting with a specific wallet.
+            # Explanation and Interpretation Section in Expander
+            with st.expander("📖 How to Interpret the Graph & Business Insights"):
+                st.markdown("""
+                ### How to Interpret the Graph:
+                - **Axes**:
+                - `Avg Transaction Amount` (X-axis): Represents the average size of transactions per wallet.
+                - `Transaction Count` (Y-axis): Represents how many transactions each wallet has conducted.
+                - `Unique Counterparties` (Z-axis): Represents the number of unique wallets interacting with a specific wallet.
 
-            - **Clusters**:
-            - Each cluster (denoted by a different color) represents a group of wallets with similar behavioral patterns.
-            - Wallets in the same cluster exhibit similar transaction volumes, activity levels, or diversity of counterparties.
+                - **Clusters**:
+                - Each cluster (denoted by a different color) represents a group of wallets with similar behavioral patterns.
+                - Wallets in the same cluster exhibit similar transaction volumes, activity levels, or diversity of counterparties.
 
-            ### Business Insights:
-            - Use this graph to identify unusual clusters that may represent suspicious activity.
-            - Clusters with low transaction amounts but high unique counterparties could indicate micro-transactions for fraud.
-            - Clusters with high transaction amounts and low counterparties could indicate high-value wallets or corporate accounts.
-            """)
+                ### Business Insights:
+                - Use this graph to identify unusual clusters that may represent suspicious activity.
+                - Clusters with low transaction amounts but high unique counterparties could indicate micro-transactions for fraud.
+                - Clusters with high transaction amounts and low counterparties could indicate high-value wallets or corporate accounts.
+                """)
 
             # Apply KMeans
+            from sklearn.cluster import KMeans
             kmeans = KMeans(n_clusters=3, random_state=42)
             features['cluster'] = kmeans.fit_predict(features[['avg_tx_amount', 'tx_count', 'unique_peers']])
+
+            # Cluster Insights
+            cluster_summary = features.groupby('cluster').agg({
+                'avg_tx_amount': ['mean', 'std'],
+                'tx_count': ['mean', 'std'],
+                'unique_peers': ['mean', 'std'],
+            }).reset_index()
+            cluster_summary.columns = ['Cluster', 'Avg Tx Amount (Mean)', 'Avg Tx Amount (Std)', 
+                                    'Tx Count (Mean)', 'Tx Count (Std)', 
+                                    'Unique Peers (Mean)', 'Unique Peers (Std)']
 
             # Visualization
             fig_cluster = px.scatter_3d(
@@ -192,6 +203,36 @@ if uploaded_file:
                 }
             )
             st.plotly_chart(fig_cluster, use_container_width=True)
+
+            # Right Sidebar with Dynamic Cluster Insights
+            st.markdown("#### 📊 Cluster Insights")
+            num_clusters = len(features['cluster'].unique())
+            st.markdown(f"**Number of Clusters Found:** {num_clusters}")
+
+            for cluster in range(num_clusters):
+                cluster_info = cluster_summary[cluster_summary['Cluster'] == cluster]
+                avg_tx = cluster_info['Avg Tx Amount (Mean)'].values[0]
+                tx_count = cluster_info['Tx Count (Mean)'].values[0]
+                unique_peers = cluster_info['Unique Peers (Mean)'].values[0]
+                st.markdown(f"""
+                **Cluster {cluster}:**
+                - **Avg Transaction Amount:** {avg_tx:.2f}
+                - **Transaction Count:** {tx_count:.2f}
+                - **Unique Counterparties:** {unique_peers:.2f}
+                """)
+                
+            # Highlight Key Business Insights
+            st.markdown("""
+            ### 🛠️ Key Business Insights:
+            1. **Unusual Clusters**:
+            - Clusters with very low transaction amounts but high unique counterparties could indicate suspicious activity or fraudulent behavior.
+            - Clusters with very high transaction amounts might indicate corporate wallets or high-value accounts.
+
+            2. **Decision-Making**:
+            - Investigate clusters with outliers that deviate significantly from the average behavior.
+            - Monitor clusters that show moderate activity for potential fraud escalation.
+            """)
+
 
 
             # Download Results
