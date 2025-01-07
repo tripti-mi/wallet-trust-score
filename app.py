@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.cluster import KMeans
 import plotly.express as px
 
 # Set page layout
@@ -38,13 +39,8 @@ with st.expander("📖 Behind the Scenes: Explanation and Formula"):
     - **Unique Counterparties**: Indicates the number of unique wallets interacting with this wallet.  
 
     ### How It Works:
-    1. The metrics are derived from the uploaded dataset.  
-    2. The score is calculated by multiplying each metric by its respective weight (set by the user).  
-    3. The total score is normalized to a range of 0–1 using MinMaxScaler.  
-    4. Based on the thresholds, wallets are categorized into:
-       - `Safe` (below the Safe threshold),
-       - `Monitor` (between Safe and Monitor thresholds),
-       - `Investigate` (above the Monitor threshold).
+    - **Unsupervised Learning**: In addition to the rule-based scoring system, we apply clustering (e.g., KMeans) to detect patterns in wallet behavior.
+    - **Clustering**: KMeans groups wallets into clusters based on their feature similarity. These clusters can indicate different behavioral patterns.
     """)
 
 # Sidebar for file upload
@@ -157,6 +153,23 @@ if uploaded_file:
                         }
                     )
                     st.plotly_chart(fig_bar, use_container_width=True)
+
+            # Unsupervised Learning Section
+            st.markdown("### 🔍 Unsupervised Learning: Wallet Clustering")
+            st.markdown("""
+            Clustering is a machine learning technique that groups data points based on similarity.  
+            Here, we use **KMeans clustering** to group wallets into behavioral patterns.
+            """)
+            # Apply KMeans
+            kmeans = KMeans(n_clusters=3, random_state=42)
+            features['cluster'] = kmeans.fit_predict(features[['avg_tx_amount', 'tx_count', 'unique_peers']])
+
+            # Visualization
+            fig_cluster = px.scatter_3d(
+                features, x='avg_tx_amount', y='tx_count', z='unique_peers', color='cluster',
+                title="Wallet Clusters (Unsupervised Learning)"
+            )
+            st.plotly_chart(fig_cluster, use_container_width=True)
 
             # Download Results
             csv = features.to_csv(index=False)
