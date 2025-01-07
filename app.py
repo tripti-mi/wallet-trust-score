@@ -211,7 +211,6 @@ else:
         with col1:
             fig_cluster = px.scatter_3d(
                 features, x='avg_tx_amount', y='tx_count', z='unique_peers', color='cluster',
-                title="Wallet Clusters (Unsupervised Learning)",
                 labels={
                     'avg_tx_amount': 'Avg Transaction Amount',
                     'tx_count': 'Transaction Count',
@@ -238,16 +237,20 @@ else:
                 - **Unique Counterparties:** {unique_peers:.2f}
                 """)
 
-            # Personalized Key Business Insights
-            st.markdown("### 🛠️ Personalized Key Business Insights")
-            with st.expander("💡 Business Insights for Clustering Results"):
-                for cluster in range(num_clusters):
-                    cluster_info = cluster_summary[cluster_summary['Cluster'] == cluster]
-                    avg_tx = cluster_info['Avg Tx Amount (Mean)'].values[0]
-                    tx_count = cluster_info['Tx Count (Mean)'].values[0]
-                    unique_peers = cluster_info['Unique Peers (Mean)'].values[0]
+            # Download Results
+            csv = features.to_csv(index=False)
+            st.download_button("Download Results as CSV", csv, "wallet_risk_profiles.csv", "text/csv")
 
-                    st.markdown(f"""
+        # Personalized Key Business Insights
+        st.markdown("### 🛠️ Personalized Key Business Insights")
+        with st.expander("💡 Business Insights for Clustering Results"):
+            for cluster in range(num_clusters):
+                cluster_info = cluster_summary[cluster_summary['Cluster'] == cluster]
+                avg_tx = cluster_info['Avg Tx Amount (Mean)'].values[0]
+                tx_count = cluster_info['Tx Count (Mean)'].values[0]
+                unique_peers = cluster_info['Unique Peers (Mean)'].values[0]
+
+                st.markdown(f"""
                     #### Cluster {cluster}:
                     - **Average Transaction Amount**: Indicates that wallets in this cluster typically handle transactions around **{avg_tx:.2f}** in value.
                     - **Transaction Count**: Suggests that wallets in this cluster are conducting approximately **{tx_count:.2f}** transactions on average.
@@ -257,9 +260,7 @@ else:
                     - For clusters with **high average transaction amounts** and **low counterparties**, focus on identifying high-value wallets (e.g., corporate accounts).
                     - For clusters with **low transaction amounts** but **high unique counterparties**, investigate for potential micro-transaction-based fraud.
                     - Clusters with **moderate transaction activity** and **diverse counterparties** may warrant monitoring for emerging risks or suspicious activity.
-                    """)
+                """)
 
 
-    # Download Results
-    csv = features.to_csv(index=False)
-    st.download_button("Download Results as CSV", csv, "wallet_risk_profiles.csv", "text/csv")
+    
